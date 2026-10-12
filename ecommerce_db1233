@@ -1,0 +1,166 @@
+CREATE DATABASE IF NOT EXISTS ecommerce_db1233;
+
+USE ecommerce_db1233;
+
+CREATE TABLE Customer (
+    Customer_ID INT PRIMARY KEY,
+    Customer_Name VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE Orders (
+    Order_ID INT PRIMARY KEY,
+    Customer_ID INT NOT NULL,
+    Order_Amount DECIMAL(10,2) NOT NULL,
+    Order_Status VARCHAR(20) NOT NULL,
+    FOREIGN KEY (Customer_ID)
+        REFERENCES Customer(Customer_ID)
+);
+
+CREATE TABLE Payment (
+    Payment_ID VARCHAR(10) PRIMARY KEY,
+    Order_ID INT NOT NULL UNIQUE,
+    Payment_Date DATE NOT NULL,
+    Payment_Mode VARCHAR(30) NOT NULL,
+    Payment_Status VARCHAR(20) NOT NULL,
+    Transaction_Amount DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (Order_ID)
+        REFERENCES Orders(Order_ID),
+    CHECK (Transaction_Amount > 0),
+    CHECK (Payment_Mode IN (
+        'UPI',
+        'Credit Card',
+        'Debit Card',
+        'Net Banking',
+        'Cash on Delivery'
+    )),
+    CHECK (Payment_Status IN (
+        'Success',
+        'Failed',
+        'Pending'
+    ))
+);
+
+INSERT INTO Customer (Customer_ID, Customer_Name)
+VALUES
+(101, 'Arun'),
+(102, 'Priya'),
+(103, 'Rahul'),
+(104, 'Divya'),
+(105, 'Karthik'),
+(106, 'Meena'),
+(107, 'Vijay'),
+(108, 'Anu');
+
+INSERT INTO Orders
+    (Order_ID, Customer_ID, Order_Amount, Order_Status)
+VALUES
+(5001, 101, 2500.00, 'Completed'),
+(5002, 102, 4500.00, 'Completed'),
+(5003, 103, 1500.00, 'Completed'),
+(5004, 104, 3200.00, 'Completed'),
+(5005, 105, 1800.00, 'Completed'),
+(5006, 106, 2700.00, 'Completed'),
+(5007, 107, 3500.00, 'Completed'),
+(5008, 108, 2200.00, 'Completed');
+
+INSERT INTO Payment
+    (Payment_ID, Order_ID, Payment_Date, Payment_Mode,
+     Payment_Status, Transaction_Amount)
+VALUES
+('P101', 5001, '2026-10-01', 'UPI', 'Success', 2500.00),
+('P102', 5002, '2026-10-02', 'Credit Card', 'Failed', 4500.00),
+('P103', 5003, '2026-10-03', 'Debit Card', 'Success', 1500.00),
+('P104', 5004, '2026-10-04', 'Net Banking', 'Pending', 3200.00),
+('P105', 5005, '2026-10-05', 'Cash on Delivery', 'Success', 1800.00),
+('P106', 5006, '2026-10-06', 'UPI', 'Failed', 2700.00),
+('P107', 5007, '2026-10-07', 'Credit Card', 'Success', 3500.00),
+('P108', 5008, '2026-10-08', 'UPI', 'Pending', 2200.00);
+
+SELECT *
+FROM Payment
+WHERE Order_ID = 5001;
+
+SELECT *
+FROM Payment
+WHERE Payment_Status = 'Success';
+
+SELECT *
+FROM Payment
+WHERE Payment_Status = 'Failed';
+
+SELECT
+    Payment_Status,
+    COUNT(*) AS Total_Transactions
+FROM Payment
+WHERE Payment_Status IN ('Success', 'Failed')
+GROUP BY Payment_Status;
+
+UPDATE Payment
+SET Payment_Status = 'Success',
+    Payment_Date = '2026-10-12'
+WHERE Payment_ID = 'P102'
+AND Payment_Status = 'Failed';
+
+SELECT *
+FROM Payment
+WHERE Payment_Status = 'Pending';
+
+SELECT COUNT(*) AS Total_UPI_Transactions
+FROM Payment
+WHERE Payment_Mode = 'UPI';
+
+SELECT COUNT(*) AS Total_Card_Payments
+FROM Payment
+WHERE Payment_Mode IN ('Credit Card', 'Debit Card');
+
+SELECT
+    Payment_Mode,
+    COUNT(*) AS Total_Transactions
+FROM Payment
+GROUP BY Payment_Mode;
+
+SELECT
+    Payment_Mode,
+    COUNT(*) AS Total_Transactions
+FROM Payment
+GROUP BY Payment_Mode
+ORDER BY Total_Transactions DESC
+LIMIT 1;
+
+SELECT
+    COALESCE(SUM(Transaction_Amount), 0) AS Total_Revenue
+FROM Payment
+WHERE Payment_Status = 'Success';
+
+SELECT
+    Payment_Mode,
+    SUM(Transaction_Amount) AS Total_Revenue
+FROM Payment
+WHERE Payment_Status = 'Success'
+GROUP BY Payment_Mode
+ORDER BY Total_Revenue DESC;
+
+SELECT
+    COALESCE(AVG(Transaction_Amount), 0) AS Average_Transaction_Amount
+FROM Payment
+WHERE Payment_Status = 'Success';
+
+SELECT
+    C.Customer_Name,
+    O.Order_ID,
+    P.Payment_Mode,
+    P.Transaction_Amount AS Amount,
+    P.Payment_Status
+FROM Customer C
+INNER JOIN Orders O
+    ON C.Customer_ID = O.Customer_ID
+INNER JOIN Payment P
+    ON O.Order_ID = P.Order_ID
+ORDER BY O.Order_ID;
+
+SELECT *
+FROM Payment;
+
+SHOW TABLES;
+
+DESCRIBE Payment;
